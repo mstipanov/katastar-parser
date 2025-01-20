@@ -7,11 +7,15 @@ import requests
 import math
 import random
 import urllib3
-from os import path
 import urllib
 import argparse
+import os
+
+from ratelimit import limits, sleep_and_retry
 
 
+@sleep_and_retry
+@limits(calls=2, period=4)
 def do_get_data(url, useCors=False, sleepBefore=0.5):
     if sleepBefore > 0:
         time.sleep(0.5)
@@ -149,16 +153,17 @@ def safe_int(s):
 
 
 def dump_katastar(ko, cesticaNum, cesticaMax):
-    lastLine = last_non_empty_line('cestice.csv')
-    if lastLine:
-        c = lastLine.split(",")[0]
-        if c:
-            c = c.split("/")[0]
+    if os.path.exists('cestice.csv'):
+        lastLine = last_non_empty_line('cestice.csv')
+        if lastLine:
+            c = lastLine.split(",")[0]
             if c:
-                i = safe_int(c)
-                if i > cesticaNum:
-                    cesticaNum = i
-    if cesticaNum == 0:
+                c = c.split("/")[0]
+                if c:
+                    i = safe_int(c)
+                    if i > cesticaNum:
+                        cesticaNum = i
+    else:
         log("čestica,adresa,površina,udio,ime vlasnika,adresa vlasnika,OIB vlasnika", False)
     while cesticaMax > cesticaNum:
         cesticaNum = cesticaNum + 1
